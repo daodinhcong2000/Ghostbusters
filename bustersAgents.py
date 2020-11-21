@@ -44,14 +44,14 @@ class KeyboardInference(inference.InferenceModule):
         for p in self.legalPositions: self.beliefs[p] = 1.0
         self.beliefs.normalize()
 
-    def observe(self, observation, gameState):
+    def observeUpdate(self, observation, gameState):
         noisyDistance = observation
-        emissionModel = busters.getObservationDistribution(noisyDistance)
         pacmanPosition = gameState.getPacmanPosition()
         allPossible = util.Counter()
         for p in self.legalPositions:
             trueDistance = util.manhattanDistance(p, pacmanPosition)
-            if emissionModel[trueDistance] > 0:
+            if noisyDistance != None and \
+                    busters.getObservationProbability(noisyDistance, trueDistance) > 0:
                 allPossible[p] = 1.0
         allPossible.normalize()
         self.beliefs = allPossible
@@ -94,7 +94,7 @@ class BustersAgent:
                 inf.elapseTime(gameState)
             self.firstMove = False
             if self.observeEnable:
-                inf.observeState(gameState)
+                inf.observe(gameState)
             self.ghostBeliefs[index] = inf.getBeliefDistribution()
         self.display.updateDistributions(self.ghostBeliefs)
         return self.chooseAction(gameState)
@@ -132,29 +132,7 @@ class GreedyBustersAgent(BustersAgent):
         """
         First computes the most likely position of each ghost that has
         not yet been captured, then chooses an action that brings
-        Pacman closer to the closest ghost (according to mazeDistance!).
-
-        To find the mazeDistance between any two positions, use:
-          self.distancer.getDistance(pos1, pos2)
-
-        To find the successor position of a position after an action:
-          successorPosition = Actions.getSuccessor(position, action)
-
-        livingGhostPositionDistributions, defined below, is a list of
-        util.Counter objects equal to the position belief
-        distributions for each of the ghosts that are still alive.  It
-        is defined based on (these are implementation details about
-        which you need not be concerned):
-
-          1) gameState.getLivingGhosts(), a list of booleans, one for each
-             agent, indicating whether or not the agent is alive.  Note
-             that pacman is always agent 0, so the ghosts are agents 1,
-             onwards (just as before).
-
-          2) self.ghostBeliefs, the list of belief distributions for each
-             of the ghosts (including ghosts that are not alive).  The
-             indices into this list should be 1 less than indices into the
-             gameState.getLivingGhosts() list.
+        Pacman closest to the closest ghost (according to mazeDistance!).
         """
         pacmanPosition = gameState.getPacmanPosition()
         legal = [a for a in gameState.getLegalPacmanActions()]
@@ -163,4 +141,16 @@ class GreedyBustersAgent(BustersAgent):
             [beliefs for i, beliefs in enumerate(self.ghostBeliefs)
              if livingGhosts[i+1]]
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        mostLikelyPositions = [distribution.argMax() for distribution in livingGhostPositionDistributions]
+        minAction, minDist = legal[0],float("inf")
+        for action in legal:
+        	successorPosition = Actions.getSuccessor(pacmanPosition, action)
+        	for ghostPosition in mostLikelyPositions:
+        		ghostDist = self.distancer.getDistance(successorPosition, ghostPosition)
+        		if ghostDist < minDist:
+        			minAction, minDist = action, ghostDist
+        return minAction
+
+
+
+

@@ -690,14 +690,14 @@ class Game:
             self.moveHistory.append( (agentIndex, action) )
             if self.catchExceptions:
                 try:
-                    self.state = self.state.generateSuccessor( agentIndex, action )
+                    self.state = self.state.getResult( agentIndex, action )
                 except Exception,data:
                     self.mute(agentIndex)
                     self._agentCrash(agentIndex)
                     self.unmute()
                     return
             else:
-                self.state = self.state.generateSuccessor( agentIndex, action )
+                self.state = self.state.getResult( agentIndex, action )
 
             # Change the display
             self.display.update( self.state.data )

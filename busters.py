@@ -45,20 +45,17 @@ def getNoisyDistance(pos1, pos2):
     return max(0, distance + util.sample(SONAR_NOISE_PROBS, SONAR_NOISE_VALUES))
 
 observationDistributions = {}
-def getObservationDistribution(noisyDistance):
+def getObservationProbability(noisyDistance, trueDistance):
     """
-    Returns the factor P( noisyDistance | TrueDistances ), the likelihood of the provided noisyDistance
-    conditioned upon all the possible true distances that could have generated it.
+    Returns the probability P( noisyDistance | trueDistance ).
     """
     global observationDistributions
-    if noisyDistance == None:
-        return util.Counter()
     if noisyDistance not in observationDistributions:
         distribution = util.Counter()
         for error , prob in zip(SONAR_NOISE_VALUES, SONAR_NOISE_PROBS):
             distribution[max(1, noisyDistance - error)] += prob
         observationDistributions[noisyDistance] = distribution
-    return observationDistributions[noisyDistance]
+    return observationDistributions[noisyDistance][trueDistance]
 
 ###################################################
 # YOUR INTERFACE TO THE PACMAN WORLD: A GameState #
@@ -94,12 +91,12 @@ class GameState:
         else:
             return GhostRules.getLegalActions( self, agentIndex )
 
-    def generateSuccessor( self, agentIndex, action):
+    def getResult( self, agentIndex, action):
         """
-        Returns the successor state after the specified agent takes the action.
+        Returns the state after the specified agent takes the action.
         """
         # Check that successors exist
-        if self.isWin() or self.isLose(): raise Exception('Can\'t generate a successor of a terminal state.')
+        if self.isWin() or self.isLose(): raise Exception('Can\'t generate a result of a terminal state.')
 
         # Copy current state
         state = GameState(self)
@@ -132,11 +129,11 @@ class GameState:
     def getLegalPacmanActions( self ):
         return self.getLegalActions( 0 )
 
-    def generatePacmanSuccessor( self, action ):
+    def getPacmanResult( self, action ):
         """
-        Generates the successor state after the specified pacman move
+        Generates the result state after the specified pacman action
         """
-        return self.generateSuccessor( 0, action )
+        return self.getResult( 0, action )
 
     def getPacmanState( self ):
         """

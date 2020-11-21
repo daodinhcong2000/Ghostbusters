@@ -13,6 +13,6 @@
 
 
 STUDENT_CODE_DEFAULT = 'inference.py'
-PROJECT_TEST_CLASSES = 'trackingTestClasses.py'
+PROJECT_TEST_CLASSES = 'tracking_fa14TestClasses.py'
 PROJECT_NAME = 'Project 4: Ghostbusters'
 BONUS_PIC = True
